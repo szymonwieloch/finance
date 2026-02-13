@@ -1,15 +1,20 @@
 import pandas as pd
 
-def returns_to_prices(returns:pd.Series|pd.DataFrame, initial_price=1.0) -> pd.Series|pd.DataFrame:
+def returns_to_prices(returns: pd.Series | pd.DataFrame, initial_price=1.0) -> pd.Series | pd.DataFrame:
     """
     Convert a series of returns to a series of prices.
 
-    Parameters:
-    returns (pd.Series|pd.DataFrame): A series of returns.
-    initial_price (float): The initial price to start from.
+    The function attempts to recreate a valid index for the resulting prices
+    and prepends a zero-return row so that cumulative product produces the
+    correct price series starting from `initial_price`.
+
+    Args:
+        returns (pd.Series or pd.DataFrame): A series or DataFrame of returns.
+        initial_price (float): The initial price to start from.
 
     Returns:
-    pd.Series|pd.DataFrame: A series of prices corresponding to the returns.
+        pd.Series or pd.DataFrame: A series or DataFrame of prices corresponding
+            to the provided returns.
     """
     # try to recreate valid index in the result
     index_fill = None
