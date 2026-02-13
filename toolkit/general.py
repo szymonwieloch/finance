@@ -5,7 +5,7 @@ def returns_to_prices(returns:pd.Series|pd.DataFrame, initial_price=1.0) -> pd.S
     Convert a series of returns to a series of prices.
 
     Parameters:
-    returns (pd.Series): A series of returns.
+    returns (pd.Series|pd.DataFrame): A series of returns.
     initial_price (float): The initial price to start from.
 
     Returns:
