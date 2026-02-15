@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def returns_to_prices(returns: pd.Series | pd.DataFrame, initial_price=1.0) -> pd.Series | pd.DataFrame:
     """
@@ -30,3 +31,15 @@ def returns_to_prices(returns: pd.Series | pd.DataFrame, initial_price=1.0) -> p
     result = extended.cumprod()
     result *= initial_price
     return result
+
+
+def tracking_error(returns_a: pd.Series | pd.DataFrame, returns_b: pd.Series | pd.DataFrame) -> float|pd.Series:
+    """Calculates the Tracking Error between the two return series
+
+    Args:
+        returns_a (pd.Series or pd.DataFrame): First series or DataFrame of returns.
+        returns_b (pd.Series or pd.DataFrame): Second series or DataFrame of returns.
+
+    Returns:        float or pd.Series: The tracking error between the two return series. If both inputs are Series, returns a float. If both inputs are DataFrames, returns a Series of tracking errors for each column.
+    """
+    return np.sqrt(((returns_a - returns_b)**2).sum())

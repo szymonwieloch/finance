@@ -1,7 +1,20 @@
 import marimo
 
-__generated_with = "0.19.5"
+__generated_with = "0.19.11"
 app = marimo.App(width="medium")
+
+
+@app.cell
+def _():
+    # TODO: figure out how to share common code between different directories in Python
+
+    import sys
+    from os import path
+    parent_dir = path.dirname(path.dirname(__file__))
+
+    if parent_dir not in sys.path:
+        sys.path.append(parent_dir)
+    return
 
 
 @app.cell
@@ -13,6 +26,7 @@ def _():
     from pytickersymbols import PyTickerSymbols
     import datetime
     import itertools
+
     return PyTickerSymbols, datetime, itertools, mo, yfinance
 
 
@@ -41,7 +55,7 @@ def _(datetime, mo):
 
 @app.cell
 def _(mo, tickers):
-    stocks = mo.ui.dropdown(tickers, value=tickers[0])
+    stocks = mo.ui.dropdown(tickers, value=tickers[0], searchable=True)
     return (stocks,)
 
 
@@ -61,8 +75,8 @@ def _(date_range):
 
 
 @app.cell
-def _(date_range, yfinance):
-    df = yfinance.download("AAPL", start=date_range.value[0], end=date_range.value[1])
+def _(date_range, stocks, yfinance):
+    df = yfinance.download(stocks.value, start=date_range.value[0], end=date_range.value[1])
     return (df,)
 
 
