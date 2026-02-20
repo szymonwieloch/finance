@@ -33,6 +33,20 @@ def returns_to_prices(returns: pd.Series | pd.DataFrame, initial_price=1.0) -> p
     return result
 
 
+def prices_to_returns(prices: pd.Series | pd.DataFrame) -> pd.Series | pd.DataFrame:
+    """
+    Convert a series of prices to a series of returns.
+
+    Args:
+        prices (pd.Series or pd.DataFrame): A series or DataFrame of prices.
+
+    Returns:
+        pd.Series or pd.DataFrame: A series or DataFrame of returns corresponding
+            to the provided prices.
+    """
+    return prices.pct_change().dropna()
+
+
 def tracking_error(returns_a: pd.Series | pd.DataFrame, returns_b: pd.Series | pd.DataFrame) -> float|pd.Series:
     """Calculates the Tracking Error between the two return series
 

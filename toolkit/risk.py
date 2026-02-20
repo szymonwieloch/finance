@@ -67,7 +67,7 @@ def var_historic(
     if isinstance(returns, pd.DataFrame):
         return returns.aggregate(var_historic, level=level)
     elif isinstance(returns, pd.Series):
-        return -np.percentile(returns, level / 100)
+        return -np.percentile(returns, level*100)
     else:
         raise TypeError("Expected returns to be a Series or DataFrame")
 
@@ -189,7 +189,7 @@ def es_gaussian(
     mean, std = _mean_std(returns, mean, std)
     z = stats.norm.ppf(level)
 
-    return mean - std * (stats.norm.pdf(z) / level)
+    return -mean + std * (stats.norm.pdf(z) / level)
 
 
 def es_cornish_fisher(returns: pd.Series, level: float = 0.05) -> float:
@@ -225,7 +225,7 @@ def es_cornish_fisher(returns: pd.Series, level: float = 0.05) -> float:
     # Adjustment factor based on the ratio of CF-VaR to Gaussian-VaR
     cf_adjustment = z_cf / z
 
-    return mu + (sigma * gauss_es_z * cf_adjustment)
+    return -(mu + (sigma * gauss_es_z * cf_adjustment))
 
 
 def _adjusted_z(z: float, skew: float, kurtosis: float) -> float:
@@ -294,5 +294,5 @@ def _mean_std(returns, mean, std) -> typing.Tuple[float, float]:
     if mean is None:
         mean = returns.mean()
     if std is None:
-        std = returns.std()
+        std = returns.std(axis=0)
     return mean, std
