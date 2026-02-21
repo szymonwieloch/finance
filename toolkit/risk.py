@@ -41,7 +41,7 @@ def semideviation(returns: pd.Series | pd.DataFrame) -> pd.Series | float:
     """
     if isinstance(returns, pd.Series):
         is_negative = returns < 0
-        return returns[is_negative].std(ddof=0)
+        return returns[is_negative].std(axis=0)
     elif isinstance(returns, pd.DataFrame):
         return returns.aggregate(semideviation)
     else:
@@ -49,7 +49,7 @@ def semideviation(returns: pd.Series | pd.DataFrame) -> pd.Series | float:
 
 
 def var_historic(
-    returns: pd.Series | pd.DataFrame, level: float = 0.05
+    returns: pd.Series | pd.DataFrame, level: float = 0.05, samples_in_period: int = 1
 ) -> pd.Series | float:
     """
     Calculates historical Value at Risk (VaR) for returns.
@@ -77,6 +77,7 @@ def var_gaussian(
     level: float = 0.05,
     mean: float = None,
     std: float = None,
+    samples_in_period: int = 1
 ) -> pd.Series | float:
     """
     Calculates Gaussian (parametric) Value at Risk (VaR).
@@ -96,7 +97,7 @@ def var_gaussian(
     Returns:
         float or pd.Series: Gaussian VaR value(s).
     """
-    mean, std = _mean_std(returns, mean, std)
+    mean, std = _mean_std(returns, mean, std, samples_in_period)
     z = stats.norm.ppf(level)
     return -(mean + z * std)
 
@@ -167,6 +168,7 @@ def es_gaussian(
     level: float = 0.05,
     mean: float = None,
     std: float = None,
+    samples_in_period: int = 1
 ) -> pd.Series | float:
     """
     Calculates Gaussian Expected Shortfall (ES / CVaR).
@@ -186,7 +188,7 @@ def es_gaussian(
         float or pd.Series: Expected Shortfall value(s).
     """
     # Calculate Mean and Standard Deviation
-    mean, std = _mean_std(returns, mean, std)
+    mean, std = _mean_std(returns, mean, std, samples_in_period)
     z = stats.norm.ppf(level)
 
     return -mean + std * (stats.norm.pdf(z) / level)
@@ -207,7 +209,7 @@ def es_cornish_fisher(returns: pd.Series, level: float = 0.05) -> float:
         float: Cornish-Fisher adjusted Expected Shortfall.
     """
     mu = returns.mean()
-    sigma = returns.std()
+    sigma = returns.std(axis=0)
     s = stats.skew(returns)
     k = stats.kurtosis(returns)  # scipy returns 'excess' kurtosis by default
     z = stats.norm.ppf(level)
@@ -268,7 +270,7 @@ def _all_defined(**kwargs) -> bool:
     return all_not_none
 
 
-def _mean_std(returns, mean, std) -> typing.Tuple[float, float]:
+def _mean_std(returns, mean, std, samples_in_period: int = 1) -> typing.Tuple[float, float]:
     """
     Helper to obtain or validate mean and std values.
 
@@ -277,6 +279,7 @@ def _mean_std(returns, mean, std) -> typing.Tuple[float, float]:
             are not provided.
         mean (float or None): Precomputed mean.
         std (float or None): Precomputed standard deviation.
+        samples_in_period (int): Number of samples in a period (e.g., 252 for daily returns).
 
     Returns:
         tuple[float, float]: (mean, std)
@@ -292,7 +295,7 @@ def _mean_std(returns, mean, std) -> typing.Tuple[float, float]:
             "Must provide either both mean and std, or returns"
         )
     if mean is None:
-        mean = returns.mean()
+        mean = returns.mean() * samples_in_period
     if std is None:
-        std = returns.std(axis=0)
+        std = returns.std(axis=0) * np.sqrt(samples_in_period)
     return mean, std
