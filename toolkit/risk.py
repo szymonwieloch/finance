@@ -64,12 +64,8 @@ def var_historic(
     Raises:
         TypeError: If `returns` is not a Series or DataFrame.
     """
-    if isinstance(returns, pd.DataFrame):
-        return returns.aggregate(var_historic, level=level)
-    elif isinstance(returns, pd.Series):
-        return -np.percentile(returns, level*100)
-    else:
-        raise TypeError("Expected returns to be a Series or DataFrame")
+    period_returns = returns if samples_in_period == 1 else _rolling_returns_window(returns, samples_in_period)
+    return period_returns.aggregate(lambda x: -np.percentile(x, level*100))
 
 
 def var_gaussian(
@@ -93,6 +89,7 @@ def var_gaussian(
             calculated from `returns`.
         std (float, optional): Precomputed standard deviation of returns. If
             None, it's calculated from `returns`.
+        samples_in_period (int): Number of samples in a period (e.g., 252 for daily returns) to annualize mean and std if they are calculated from returns.
 
     Returns:
         float or pd.Series: Gaussian VaR value(s).
@@ -102,7 +99,7 @@ def var_gaussian(
     return -(mean + z * std)
 
 
-def var_cornish_fisher(returns: pd.Series, level: float = 0.05) -> float:
+def var_cornish_fisher(returns: pd.Series, level: float = 0.05, mean: float = None, std: float = None, samples_in_period: int = 1) -> float:
     """
     Calculates Value at Risk (VaR) using the Cornish-Fisher expansion.
 
@@ -117,8 +114,7 @@ def var_cornish_fisher(returns: pd.Series, level: float = 0.05) -> float:
         float: Cornish-Fisher adjusted VaR (as a positive loss value).
     """
     # 1. Basic Stats
-    mu = np.mean(returns)
-    sigma = np.std(returns)
+    mean, std = _mean_std(returns, mean, std, samples_in_period)
     s = stats.skew(returns)
     k = stats.kurtosis(returns)  # Scipy returns excess kurtosis by default
 
@@ -130,12 +126,12 @@ def var_cornish_fisher(returns: pd.Series, level: float = 0.05) -> float:
 
     # 4. Calculate VaR
     # We return the absolute loss amount
-    var_result = -(mu + z_cf * sigma)
+    var_result = -(mean + z_cf * std)
     return var_result
 
 
 def es_historic(
-    returns: pd.Series | pd.DataFrame, level: float = 0.05
+    returns: pd.Series | pd.DataFrame, level: float = 0.05, samples_in_period: int = 1
 ) -> pd.Series | float:
     """
     Computes historical Expected Shortfall (ES / CVaR).
@@ -147,6 +143,7 @@ def es_historic(
     Args:
         returns (pd.Series or pd.DataFrame): Returns series or DataFrame.
         level (float): Tail level (e.g., 0.05 for the worst 5%).
+        samples_in_period (int): Number of samples in a period (e.g., 252 for daily returns) to annualize returns if needed.
 
     Returns:
         float or pd.Series: Expected Shortfall value(s).
@@ -154,13 +151,10 @@ def es_historic(
     Raises:
         TypeError: If `returns` is not a Series or DataFrame.
     """
-    if isinstance(returns, pd.Series):
-        is_beyond = returns <= -var_historic(returns, level=level)
-        return -returns[is_beyond].mean()
-    elif isinstance(returns, pd.DataFrame):
-        return returns.aggregate(es_historic, level=level)
-    else:
-        raise TypeError("Expected returns to be a Series or DataFrame")
+    period_returns = returns if samples_in_period == 1 else _rolling_returns_window(returns, samples_in_period)
+    vh = var_historic(returns, level=level, samples_in_period=samples_in_period)
+    is_beyond = period_returns <= -vh
+    return -period_returns[is_beyond].mean()
 
 
 def es_gaussian(
@@ -183,6 +177,7 @@ def es_gaussian(
         level (float): Tail level (e.g., 0.05 for the worst 5%).
         mean (float, optional): Precomputed mean of returns.
         std (float, optional): Precomputed standard deviation of returns.
+        samples_in_period (int): Number of samples in a period (e.g., 252 for daily returns) to annualize mean and std if they are calculated from returns.
 
     Returns:
         float or pd.Series: Expected Shortfall value(s).
@@ -194,7 +189,7 @@ def es_gaussian(
     return -mean + std * (stats.norm.pdf(z) / level)
 
 
-def es_cornish_fisher(returns: pd.Series, level: float = 0.05) -> float:
+def es_cornish_fisher(returns: pd.Series, level: float = 0.05, mean: float = None, std: float = None, samples_in_period: int = 1) -> float:
     """
     Calculates Expected Shortfall using the Cornish-Fisher expansion.
 
@@ -204,12 +199,12 @@ def es_cornish_fisher(returns: pd.Series, level: float = 0.05) -> float:
     Args:
         returns (pd.Series): Returns series.
         level (float): Tail level (e.g., 0.05 for the worst 5%).
+        samples_in_period (int): Number of samples in a period (e.g., 252 for daily returns) to annualize mean and std if they are calculated from returns.
 
     Returns:
         float: Cornish-Fisher adjusted Expected Shortfall.
     """
-    mu = returns.mean()
-    sigma = returns.std(axis=0)
+    mean, std = _mean_std(returns, mean, std, samples_in_period)
     s = stats.skew(returns)
     k = stats.kurtosis(returns)  # scipy returns 'excess' kurtosis by default
     z = stats.norm.ppf(level)
@@ -227,7 +222,7 @@ def es_cornish_fisher(returns: pd.Series, level: float = 0.05) -> float:
     # Adjustment factor based on the ratio of CF-VaR to Gaussian-VaR
     cf_adjustment = z_cf / z
 
-    return -(mu + (sigma * gauss_es_z * cf_adjustment))
+    return -(mean + (std * gauss_es_z * cf_adjustment))
 
 
 def _adjusted_z(z: float, skew: float, kurtosis: float) -> float:
@@ -299,3 +294,17 @@ def _mean_std(returns, mean, std, samples_in_period: int = 1) -> typing.Tuple[fl
     if std is None:
         std = returns.std(axis=0) * np.sqrt(samples_in_period)
     return mean, std
+
+
+def _rolling_returns_window(returns: pd.Series|pd.DataFrame, samples_in_period: int) -> pd.Series|pd.DataFrame:
+    """
+    Helper to compute rolling returns over a specified window.
+
+    Args:
+        returns (pd.Series): Series of returns.
+        samples_in_period (int): Number of samples in a period (e.g., 252 for daily returns).
+
+    Returns:
+        pd.Series: Series of rolling returns.
+    """
+    return (returns.add(1).rolling(window=samples_in_period).apply(lambda x: x.prod()) - 1).dropna()
