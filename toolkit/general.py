@@ -56,4 +56,4 @@ def tracking_error(returns_a: pd.Series | pd.DataFrame, returns_b: pd.Series | p
 
     Returns:        float or pd.Series: The tracking error between the two return series. If both inputs are Series, returns a float. If both inputs are DataFrames, returns a Series of tracking errors for each column.
     """
-    return np.sqrt(((returns_a - returns_b)**2).sum())
+    return (returns_a - returns_b).std()
