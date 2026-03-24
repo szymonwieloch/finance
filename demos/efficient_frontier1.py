@@ -6,6 +6,7 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
+    import import_fix as _
     import marimo as mo
     import yfinance as yf
     import pandas as pd
@@ -20,9 +21,9 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # Efficient Fronter I
+    # Efficient Frontier I
 
-    Data from two stocks can be combined together to present a simple fact that shows that combining two weakly correlated stocks in a portfolio reduces total volatility.
+    Data from two stocks can be combined together to present a simple fact that combining two weakly correlated stocks in a portfolio reduces total volatility.
     """)
     return
 
@@ -33,7 +34,11 @@ def _(yf):
     tickers = ["XOM", "IBM"]  # IBM (tech) and Exxon Mobil Corp (energy)
 
     # Download historical data
-    rets = yf.download(tickers, start="2020-01-01", end="2025-01-01")['Close'].pct_change().dropna()
+    rets = (
+        yf.download(tickers, start="2020-01-01", end="2025-01-01")["Close"]
+        .pct_change()
+        .dropna()
+    )
     return (rets,)
 
 
@@ -51,13 +56,35 @@ def _(np, pd, plt, portfolio, rets, sns):
     cov = rets.cov()
 
     points = 20
-    weights = [np.array([w, 1-w]) for w in np.linspace(0, 1, points)]
+    weights = [np.array([w, 1 - w]) for w in np.linspace(0, 1, points)]
 
-    plt.figure(figsize=(14,7))
+
     prets = [portfolio.portfolio_return(w, exp_rets) for w in weights]
     pvols = [portfolio.portfolio_std(w, cov) for w in weights]
     ef = pd.DataFrame({"Returns": prets, "Volatility": pvols})
-    sns.lineplot(ef, x='Volatility', y='Returns', orient='y')
+
+    gmv = portfolio.gmv(cov)
+    gmv_r, gmv_v = (
+        portfolio.portfolio_return(gmv, exp_rets),
+        portfolio.portfolio_std(gmv, cov),
+    )
+
+    ew = np.array([0.5, 0.5])
+    ew_r, ew_v = (
+        portfolio.portfolio_return(ew, exp_rets),
+        portfolio.portfolio_std(ew, cov),
+    )
+
+    plt.figure(figsize=(14, 7))
+    sns.lineplot(ef, x="Volatility", y="Returns", orient="y")
+    plt.plot(gmv_v, gmv_r, "ro", markersize=10, label="Minimum variance portfolio")
+    plt.plot(ew_v, ew_r, "go", markersize=10, label="Equally weighted portfolio")
+    plt.legend()
+    return
+
+
+@app.cell
+def _():
     return
 
 
