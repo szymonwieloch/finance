@@ -7,3 +7,5 @@ pytest
 yfinance
 marimo
 pytickersymbols
+pyarrow
+mplfinance
