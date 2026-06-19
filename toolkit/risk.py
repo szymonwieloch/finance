@@ -65,7 +65,7 @@ def var_historic(
         TypeError: If `returns` is not a Series or DataFrame.
     """
     period_returns = returns if samples_in_period == 1 else _rolling_returns_window(returns, samples_in_period)
-    return period_returns.aggregate(lambda x: -np.percentile(x, level*100))
+    return -period_returns.quantile(level)
 
 
 def var_gaussian(
