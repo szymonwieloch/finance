@@ -9,9 +9,9 @@ def _():
     import marimo as mo
     import pandas as pd
     import numpy as np
-    import yfinance as yf
+    from toolkit.data import cached_download
 
-    return mo, yf
+    return cached_download, mo
 
 
 @app.cell(hide_code=True)
@@ -32,7 +32,7 @@ def _(yf):
     # last 10 years of data
     start_date = "2016-03-22"
     end_date = "2026-03-22"
-    df = yf.download(
+    df = cached_download(
         [market_cap, eq_weighted, risk_free], start=start_date, end=end_date
     )
     df

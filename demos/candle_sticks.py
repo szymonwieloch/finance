@@ -8,14 +8,14 @@ app = marimo.App(width="medium")
 def _():
     import import_fix as _
     import marimo as mo
-    import yfinance as yf
+    from toolkit.data import cached_download
     import pandas as pd
     import numpy as np
     from toolkit import general
     import mplfinance as mpf
     import matplotlib.pyplot as plt
 
-    return mo, mpf, yf
+    return cached_download, mo, mpf
 
 
 @app.cell(hide_code=True)
@@ -30,7 +30,7 @@ def _(mo):
 
 @app.cell
 def _(yf):
-    df = yf.download('TSLA', period='2y', interval='1d')
+    df = cached_download('TSLA', period='2y', interval='1d')
     df.columns = df.columns.droplevel(1)
     df
     return (df,)

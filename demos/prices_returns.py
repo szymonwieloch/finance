@@ -9,12 +9,12 @@ def _():
     import import_fix as _
     import marimo as mo
     import pandas as pd
-    import yfinance as yf
+    from toolkit.data import cached_download
     import datetime as dt
     import matplotlib.pyplot as plt
     from toolkit import general
 
-    return dt, general, mo, plt, yf
+    return cached_download, data, dt, general, mo, plt
 
 
 @app.cell(hide_code=True)
@@ -30,7 +30,7 @@ def _(mo):
 @app.cell
 def _(dt, yf):
     today = dt.date.today()
-    data = yf.download("SPY", period='10y', interval='1d')
+    data = cached_download("SPY", period='10y', interval='1d')
     data
     return (data,)
 

@@ -11,9 +11,9 @@ def _():
     import numpy as np
     import seaborn as sns
     import matplotlib.pyplot as plt
-    import yfinance as yf
+    from toolkit.data import cached_download
 
-    return mo, plt, sns, yf
+    return cached_download, mo, plt, sns
 
 
 @app.cell(hide_code=True)
@@ -39,8 +39,8 @@ def _(yf):
 
     sp500_ticker = "^GSPC"
 
-    df = yf.download(tickers, period='40y', interval='1wk')
-    sp500 = yf.download(sp500_ticker, start=df.index[0], interval='1wk')
+    df = cached_download(tickers, period='40y', interval='1wk')
+    sp500 = cached_download(sp500_ticker, start=df.index[0], interval='1wk')
     return df, sp500
 
 

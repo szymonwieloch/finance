@@ -8,14 +8,14 @@ app = marimo.App(width="medium")
 def _():
     import import_fix as _
     import marimo as mo
-    import yfinance as yf
+    from toolkit.data import cached_download
     import pandas as pd
     import matplotlib.pyplot as plt
     import seaborn as sns
     import numpy as np
     from toolkit import portfolio
 
-    return mo, np, pd, plt, portfolio, sns, yf
+    return cached_download, mo, np, pd, plt, portfolio, sns
 
 
 @app.cell
@@ -57,7 +57,7 @@ def _(yf):
 
     # Download historical data
     rets = (
-        yf.download(tickers, start="2020-01-01", end="2025-01-01")["Close"]
+        cached_download(tickers, start="2020-01-01", end="2025-01-01")["Close"]
         .pct_change()
         .dropna()
     )

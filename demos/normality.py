@@ -11,10 +11,10 @@ def _():
     import scipy.stats as st
     import seaborn as sns
     import marimo as mo
-    import yfinance as yf
+    from toolkit.data import cached_download
     import matplotlib.pyplot as plt
 
-    return mo, pd, plt, sns, st, yf
+    return cached_download, mo, pd, plt, sns, st
 
 
 @app.cell(hide_code=True)
@@ -31,7 +31,7 @@ def _(mo):
 def _(yf):
     ticker = "^GSPC" # Define the ticker for the S&P 500 Index
 
-    df = yf.download([ticker], period='10y')
+    df = cached_download([ticker], period='10y')
     df
     return df, ticker
 

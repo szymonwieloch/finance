@@ -17,7 +17,7 @@ def _(mo):
 def _():
     import import_fix as _
     import marimo as mo
-    import yfinance as yf
+    from toolkit.data import cached_download
     import pandas as pd
     import seaborn as sns
     from toolkit import general
@@ -41,8 +41,8 @@ def _(yf):
         "GIS",
     ]
     SP500 = "^GSPC"
-    portfolio = yf.download(STOCKS, period="1y")
-    sp500 = yf.download(SP500, period="1y")
+    portfolio = cached_download(STOCKS, period="1y")
+    sp500 = cached_download(SP500, period="1y")
     return portfolio, sp500
 
 
