@@ -142,95 +142,56 @@ def funding_ratio(
     return assets / present_value(liabilities, r)
 
 
-
-def inst_to_ann(
-    r: float | np.ndarray,
-) -> float | np.ndarray:
-    """Convert an instantaneous (continuously compounded) rate to an annual rate.
-
-    Computes :math:`e^{r} - 1`, the annual effective rate equivalent to a
-    continuously compounded rate ``r``.
-
-    Args:
-        r: Instantaneous interest rate (decimal, e.g. 0.05 for 5%).
-            May be a scalar float or a numpy array.
-
-    Returns:
-        The equivalent annual rate(s).  Return type matches the type of ``r``.
-    """
-    return np.expm1(r)
-
-
-def ann_to_inst(
-    r: float | np.ndarray,
-) -> float | np.ndarray:
-    """Convert an annual interest rate to an instantaneous (continuously compounded) rate.
-
-    Computes :math:`\\ln(1 + r)`, the continuously compounded rate equivalent
-    to the annual effective rate ``r``.
-
-    Args:
-        r: Annual interest rate (decimal, e.g. 0.05 for 5%).
-            May be a scalar float or a numpy array.
-
-    Returns:
-        The equivalent instantaneous rate(s).  Return type matches the type
-        of ``r``.
-    """
-    return np.log1p(r)
-
-
 def cir(
     n_years: int = 10,
-    n_scenarios: int = 1,
+    n_scenarios: int = 100,
     a: float = 0.05,
     b: float = 0.03,
     sigma: float = 0.05,
     steps_per_year: int = 12,
     r_0: float | None = None,
+    seed: int | None = None,
 ) -> pd.DataFrame:
-    """Generate random interest rate paths using the Cox-Ingersoll-Ross (CIR) model.
+    """Simulate interest rate paths using the Cox-Ingersoll-Ross (CIR) model.
 
-    Simulates the short-rate process
+    Uses Euler–Maruyama discretization of the SDE:
 
     .. math::
-
         dr_t = a (b - r_t) dt + \\sigma \\sqrt{r_t} dW_t
-
-    using a straightforward Euler–Maruyama discretisation.  The parameters
-    ``b`` and ``r_0`` are supplied as *annual* rates; they are internally
-    converted to instantaneous form for the simulation, and the output is
-    converted back to annual rates.
 
     Args:
         n_years: Number of years to simulate.
-        n_scenarios: Number of independent rate paths (scenarios).
-        a: Mean-reversion speed (positive).
-        b: Long-run mean of the *annual* interest rate (decimal).
-        sigma: Annualized volatility of the short rate.
-        steps_per_year: Number of discretisation steps per year.
-        r_0: Initial annual interest rate (decimal).  Defaults to ``b``
-            when ``None``.
+        n_scenarios: Number of independent trajectories.
+        a: Mean-reversion speed.
+        b: Long-run mean rate.
+        sigma: Volatility.
+        steps_per_year: Number of discrete time steps per year.
+        r_0: Initial short rate.  Defaults to ``b`` when ``None``.
+        seed: Random seed for reproducibility.
 
     Returns:
-        A pandas DataFrame of shape ``(steps, n_scenarios)`` where each
-        column is a simulated path of annual interest rates and each row
-        is a time step.  All paths start from ``r_0`` (or ``b``).
+        A DataFrame of shape ``(steps, n_scenarios)`` with simulated annual
+        short rates.  The first row corresponds to :math:`t=0`.
     """
     if r_0 is None:
         r_0 = b
-    r_0 = ann_to_inst(r_0)
-    b_inst = ann_to_inst(b)
+    if seed is not None:
+        np.random.seed(seed)
+
     dt = 1.0 / steps_per_year
-    num_steps = int(n_years * steps_per_year) + 1
+    steps = int(n_years * steps_per_year) + 1
 
-    shock = np.random.normal(0, scale=np.sqrt(dt), size=(num_steps, n_scenarios))
-    rates = np.empty_like(shock)
-    rates[0] = r_0
-    for step in range(1, num_steps):
-        r_t = rates[step - 1]
-        d_r_t = a * (b_inst - r_t) * dt + sigma * np.sqrt(r_t) * shock[step]
-        # use abs() to guard against tiny negative values from discretisation
-        rates[step] = abs(r_t + d_r_t)
+    rates = np.zeros((steps, n_scenarios))
+    rates[0, :] = r_0
 
-    return pd.DataFrame(data=inst_to_ann(rates), index=range(num_steps))
+    for t in range(1, steps):
+        r_prev = rates[t - 1, :]
+        # Ensure non-negativity before sqrt
+        r_prev_pos = np.maximum(r_prev, 0.0)
+        dr = a * (b - r_prev) * dt + sigma * np.sqrt(r_prev_pos) * np.sqrt(dt) * np.random.normal(size=n_scenarios)
+        rates[t, :] = r_prev + dr
+
+    return pd.DataFrame(rates)
+
+
+
