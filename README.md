@@ -19,7 +19,10 @@ finance/
 │   ├── tracking_err.py         Tracking error and information ratio
 │   ├── crash_correlations.py   Correlation breakdown during crashes
 │   ├── candle_sticks.py        Candlestick charting
-│   └── valuation_multiples.py  Valuation multiples analysis
+│   ├── valuation_multiples.py  Valuation multiples analysis
+│   ├── cir.py                  CIR interest rate model
+│   ├── bond_risk.py            Zero-coupon bond risk with CIR
+│   └── cppi.py                 Constant Proportion Portfolio Insurance
 ├── toolkit/                # Core library
 │   ├── data.py                 Data fetching and preprocessing
 │   ├── general.py              General-purpose utilities
@@ -77,6 +80,9 @@ marimo edit demos/
 | `crash_correlations` | How correlations spike during market stress |
 | `candle_sticks` | OHLC candlestick charting with volume |
 | `valuation_multiples` | P/E, P/B, EV/EBITDA and other multiples |
+| `cir` | Cox-Ingersoll-Ross interest rate model simulation |
+| `bond_risk` | Zero-coupon bond risk analysis under CIR rates |
+| `cppi` | Constant Proportion Portfolio Insurance strategy |
 
 ## 🧪 Research
 
