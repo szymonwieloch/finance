@@ -13,6 +13,7 @@ finance/
 │   ├── rolling_window.py       Rolling statistics and windows
 │   ├── sharp_ratio.py          Sharpe ratio analysis
 │   ├── drawdown.py             Drawdown visualization
+│   ├── duration_matching.py    Bond duration matching (immunization)
 │   ├── value_at_risk.py        Value at Risk (VaR) estimation
 │   ├── efficient_frontier1.py  Markowitz efficient frontier (2-asset)
 │   ├── efficient_frontier2.py  Markowitz efficient frontier (n-asset)
@@ -22,8 +23,7 @@ finance/
 │   ├── valuation_multiples.py  Valuation multiples analysis
 │   ├── cir.py                  CIR interest rate model
 │   ├── bond_risk.py            Zero-coupon bond risk with CIR
-│   └── cppi.py                 Constant Proportion Portfolio Insurance
-├── toolkit/                # Core library
+│   └── cppi.py                 Constant Proportion Portfolio Insurance│   ├── cppi_liability.py        CPPI vs. alternatives for liability funding├── toolkit/                # Core library
 │   ├── data.py                 Data fetching and preprocessing
 │   ├── general.py              General-purpose utilities
 │   ├── portfolio.py            Portfolio construction & optimization
@@ -73,6 +73,7 @@ marimo edit demos/
 | `rolling_window` | Computing rolling means, volatility, and correlations |
 | `sharp_ratio` | Risk-adjusted return measurement |
 | `drawdown` | Peak-to-trough decline analysis |
+| `duration_matching` | Bond immunization via duration matching with CIR |
 | `value_at_risk` | Parametric, historical, and Monte Carlo VaR |
 | `efficient_frontier1` | Two-asset portfolio optimization |
 | `efficient_frontier2` | N-asset Markowitz mean-variance optimization |
@@ -83,6 +84,7 @@ marimo edit demos/
 | `cir` | Cox-Ingersoll-Ross interest rate model simulation |
 | `bond_risk` | Zero-coupon bond risk analysis under CIR rates |
 | `cppi` | Constant Proportion Portfolio Insurance strategy |
+| `cppi_liability` | CPPI vs. alternative strategies for liability funding |
 
 ## 🧪 Research
 
